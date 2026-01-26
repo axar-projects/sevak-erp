@@ -57,12 +57,20 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [dragging]); // Dependencies on dragging state
+  }, [dragging, zoom]); // Added zoom to dependency
 
   const updateField = (id: string, updates: Partial<IFieldConfig>) => {
     setConfig((prev) => {
       if (id === "imageArea") {
         return { ...prev, imageArea: { ...prev.imageArea, ...updates } };
+      }
+      if (id === "qrCode") {
+           // Create a safe copy of fields to avoid mutation issues, though deep clone is better
+           const newFields = { ...prev.fields };
+           if (newFields.qrCode) {
+               newFields.qrCode = { ...newFields.qrCode, ...updates };
+           }
+           return { ...prev, fields: newFields };
       }
       return {
         ...prev,
@@ -88,6 +96,7 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
   // Helper to get field config by ID
   const getField = (id: string): IFieldConfig => {
     if (id === "imageArea") return config.imageArea;
+    if (id === "qrCode") return config.fields.qrCode;
     return (config.fields as any)[id];
   };
 
@@ -135,8 +144,26 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                 Photo Area
             </div>
 
+            {/* 3. QR Code Area (Draggable Box) */}
+             {config.fields.qrCode && config.fields.qrCode.enabled && (
+                <div
+                    onMouseDown={(e) => handleMouseDown(e, "qrCode", config.fields.qrCode.x, config.fields.qrCode.y)}
+                    className={`absolute cursor-move border-2 ${selectedField === "qrCode" ? "border-primary z-20" : "border-dashed border-gray-400 z-10"} bg-gray-200/30 flex items-center justify-center text-xs text-center text-gray-500`}
+                    style={{
+                        left: config.fields.qrCode.x,
+                        top: config.fields.qrCode.y,
+                        width: config.fields.qrCode.width || 200,
+                        height: config.fields.qrCode.height || 200,
+                    }}
+                >
+                    QR Code
+                </div>
+             )}
+
             {/* 2. Text Fields */}
-            {Object.entries(config.fields).map(([key, field]) => (
+            {Object.entries(config.fields).map(([key, field]) => {
+                if (key === 'qrCode') return null;
+                return (
                 <div
                     key={key}
                     onMouseDown={(e) => handleMouseDown(e, key, field.x, field.y)}
@@ -157,7 +184,7 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                      key === 'startDate' ? "01/01" : 
                      key === 'endDate' ? "05/01" : field.label}
                 </div>
-            ))}
+            )})}
         </div>
         </div>
       </div>
@@ -196,7 +223,7 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
 
         {selectedField ? (
             <div className="space-y-4">
-                <h3 className="font-semibold capitalize text-lg">{selectedField === "imageArea" ? "Photo Area" : selectedField}</h3>
+                <h3 className="font-semibold capitalize text-lg">{selectedField === "imageArea" ? "Photo Area" : selectedField === "qrCode" ? "QR Code" : selectedField}</h3>
                 
                 <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground uppercase">Position (X, Y)</label>
@@ -216,8 +243,7 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                     </div>
                 </div>
 
-                {selectedField !== "imageArea" && (
-                    <>
+                {selectedField !== "imageArea" && selectedField !== "qrCode" && (
                     <div className="space-y-2">
                         <label className="text-xs font-medium text-muted-foreground uppercase">Font Size (px)</label>
                         <input 
@@ -227,6 +253,8 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                             className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
                         />
                     </div>
+                )}
+                {selectedField !== "imageArea" && (
                     <div className="space-y-2">
                         <label className="text-xs font-medium text-muted-foreground uppercase">Color</label>
                         <div className="flex gap-2">
@@ -244,9 +272,8 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                             />
                         </div>
                     </div>
-                    </>
                 )}
-                 {selectedField === "imageArea" && (
+                 {(selectedField === "imageArea" || selectedField === "qrCode") && (
                     <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground uppercase">Size (W x H)</label>
                     <div className="grid grid-cols-2 gap-2">

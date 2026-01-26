@@ -13,6 +13,7 @@ const DEFAULT_CONFIG: Partial<ITemplateConfig> = {
         gaam: { x: 350, y: 340, fontSize: 24, color: "#5D4037", label: "Gaam", enabled: true },
         startDate: { x: 350, y: 390, fontSize: 24, color: "#5D4037", label: "Start Date", enabled: true },
         endDate: { x: 500, y: 390, fontSize: 24, color: "#5D4037", label: "End Date", enabled: true },
+        qrCode: { x: 50, y: 900, fontSize: 0, color: "#FFFFFF", label: "QR Code", enabled: true, width: 200, height: 200 },
     },
 };
 
@@ -34,6 +35,12 @@ export async function getTemplateConfig() {
         }
         if (!configObj.fields.endDate) {
             configObj.fields.endDate = DEFAULT_CONFIG.fields?.endDate;
+        }
+        if (!configObj.fields.qrCode) {
+            configObj.fields.qrCode = DEFAULT_CONFIG.fields?.qrCode;
+        } else if (configObj.fields.qrCode.color === "#000000") {
+            // Migration: Force white if it relies on schema default black, as we want white for this template
+            configObj.fields.qrCode.color = DEFAULT_CONFIG.fields?.qrCode?.color || "#FFFFFF";
         }
         // Remove legacy duration field from the UI object so it doesn't show up
         if (configObj.fields.duration) {

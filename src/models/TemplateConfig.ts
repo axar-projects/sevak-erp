@@ -21,6 +21,7 @@ export interface ITemplateConfig {
         gaam: IFieldConfig;
         startDate: IFieldConfig;
         endDate: IFieldConfig;
+        qrCode: IFieldConfig; // NEW: QR Code configuration
     };
     updatedAt?: Date;
 }
@@ -46,6 +47,7 @@ const TemplateConfigSchema = new Schema<ITemplateConfig>(
             gaam: { type: FieldConfigSchema, required: true },
             startDate: { type: FieldConfigSchema, required: true },
             endDate: { type: FieldConfigSchema, required: true },
+            qrCode: { type: FieldConfigSchema, required: true },
         },
     },
     { timestamps: true }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IUser } from "@/models/User";
 import { getTemplateConfig } from "@/actions/settings-actions";
 import { ITemplateConfig } from "@/models/TemplateConfig";
+import QRCode from "qrcode";
 
 const TEMPLATE_URL = "/id-card-vertical-template.jpg";
 
@@ -154,7 +155,31 @@ export function useIdCardGenerator() {
             drawText('startDate', formatDate(user.sevaDuration.startDate));
             drawText('endDate', formatDate(user.sevaDuration.endDate));
 
-            // 6. Download
+            // 6. Draw QR Code
+            if (config.fields.qrCode && config.fields.qrCode.enabled) {
+                try {
+                    const qrCodeDataUrl = await QRCode.toDataURL(user._id || "unknown", {
+                        width: config.fields.qrCode.width || 200,
+                        margin: 1,
+                        color: {
+                            dark: config.fields.qrCode.color || "#000000",
+                            light: "#00000000" // Transparent background
+                        }
+                    });
+
+                    const qrImg = await loadImage(qrCodeDataUrl);
+                    const qX = config.fields.qrCode.x;
+                    const qY = config.fields.qrCode.y;
+                    const qW = config.fields.qrCode.width || 200;
+                    const qH = config.fields.qrCode.height || 200;
+
+                    ctx.drawImage(qrImg, qX, qY, qW, qH);
+                } catch (e) {
+                    console.error("Failed to generate QR code", e);
+                }
+            }
+
+            // 7. Download
             // We want it high quality, but for ID cards PNG is fine at this resolution
             const link = document.createElement("a");
             link.download = `sevak-id-${user.name.replace(/\s+/g, "_")}.png`;
