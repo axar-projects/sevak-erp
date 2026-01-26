@@ -15,18 +15,34 @@ export async function markAttendance(userId: string) {
             return { success: false, message: "User not found" };
         }
 
-        // 2. Check for duplicate attendance today
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
+        // 2. Check for duplicate attendance today (IST Timezone)
+        // Current time in UTC
+        const now = new Date();
 
-        const endOfDay = new Date();
-        endOfDay.setHours(23, 59, 59, 999);
+        // Convert to IST string to get the correct "Day" components
+        const istDateString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+        const istDate = new Date(istDateString);
+
+        // Normalize to Start of Day in IST (00:00:00 AM IST)
+        const startOfDayIST = new Date(istDate);
+        startOfDayIST.setHours(0, 0, 0, 0); // This is 00:00 in "Local System Time" of the container if we parse string? 
+        // Wait, toLocaleString gives a string. reading it back into Date() relies on system locale.
+        // Better approach: Calculate offset manually or use simple string manipulation.
+
+        // Robust approach for IST Day Boundary:
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const nowIST = new Date(now.getTime() + istOffset);
+        nowIST.setUTCHours(0, 0, 0, 0); // Normalize to midnight
+
+        // Convert back to UTC for DB query
+        const startOfDayUTC = new Date(nowIST.getTime() - istOffset);
+        const endOfDayUTC = new Date(startOfDayUTC.getTime() + 24 * 60 * 60 * 1000 - 1);
 
         const existing = await Attendance.findOne({
             userId: userId,
             date: {
-                $gte: startOfDay,
-                $lte: endOfDay
+                $gte: startOfDayUTC,
+                $lte: endOfDayUTC
             }
         });
 
@@ -40,9 +56,10 @@ export async function markAttendance(userId: string) {
         }
 
         // 3. Create Attendance Record
+        // We store the normalized date as the "Attendance Date" (start of that day in UTC representation of IST start)
         await Attendance.create({
             userId: userId,
-            date: startOfDay, // Store normalized date for querying
+            date: startOfDayUTC,
             status: "present",
             scanMethod: "qr"
         });
@@ -66,20 +83,53 @@ export async function getAttendanceReport(dateInput?: string | Date) {
     try {
         await connectToDatabase();
 
-        // 1. Determine Date Range
-        const targetDate = dateInput ? new Date(dateInput) : new Date();
-        const startOfDay = new Date(targetDate);
-        startOfDay.setHours(0, 0, 0, 0);
+        // 1. Determine Date Range (IST)
+        let targetIST: Date;
 
-        const endOfDay = new Date(targetDate);
-        endOfDay.setHours(23, 59, 59, 999);
+        if (dateInput) {
+            // Assume input "YYYY-MM-DD" is for India
+            targetIST = new Date(dateInput);
+        } else {
+            // Default to "Now" in IST
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            targetIST = new Date(now.getTime() + istOffset);
+        }
+
+        // Normalize to Midnight IST
+        // Logic: Add offset -> floor to day -> subtract offset to get UTC equivalent of IST Midnight
+        // But since we constructed targetIST from string, it might be UTC 00:00.
+        // Let's rely on string parsing "YYYY-MM-DD" -> UTC 00:00.
+        // We want to shift it so it ALIGNS with our storage logic.
+        // Storage Logic: "Date" stored is (IST Midnight converted to UTC).
+        // Example: Jan 27 IST Midnight -> Jan 26 18:30 UTC.
+        // So we want to find records where `date` EQUALS `Jan 26 18:30 UTC`.
+        // Wait, duplicated records store timestamps? No, `date` is normalized.
+
+        // Let's stick to the storage convention:
+        // markAttendance stores: (NowUTC + 5.5h).setUTCHours(0,0,0,0) - 5.5h
+
+        // So query must replicate this:
+        const d = new Date(dateInput || new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const istOffset = 5.5 * 60 * 60 * 1000;
+
+        // Create a UTC date that mimics the IST date components (e.g. 2024-01-27 00:00:00 UTC)
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const day = d.getDate();
+
+        const istMidnightInUTC = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+
+        // Now shift it back to actual UTC time
+        const startOfDayUTC = new Date(istMidnightInUTC.getTime() - istOffset);
+        const endOfDayUTC = new Date(startOfDayUTC.getTime() + 24 * 60 * 60 * 1000 - 1);
 
         // 2. Fetch Attendance
         // Use .lean() for performance since we don't need mongoose document features
         const attendanceRecords = await Attendance.find({
             date: {
-                $gte: startOfDay,
-                $lte: endOfDay
+                $gte: startOfDayUTC,
+                $lte: endOfDayUTC
             }
         })
             .populate({

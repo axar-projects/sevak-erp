@@ -1,71 +1,83 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 import { markAttendance } from "@/actions/attendance-actions";
 
 export default function AttendanceScanner() {
     const [scanResult, setScanResult] = useState<{ success: boolean; message: string; user?: any; status?: string } | null>(null);
     const [isScanning, setIsScanning] = useState(true);
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const scannerRef = useRef<Html5Qrcode | null>(null);
 
     useEffect(() => {
         // Initialize Scanner
-        // We use a timeout to ensure the DOM element exists
-        const timer = setTimeout(() => {
-            if (!scannerRef.current) {
-                scannerRef.current = new Html5QrcodeScanner(
-                    "reader",
-                    { 
-                        fps: 10, 
+        const startScanner = async () => {
+            try {
+                // Ensure element exists
+                if (!document.getElementById("reader")) return;
+
+                const html5QrCode = new Html5Qrcode("reader");
+                scannerRef.current = html5QrCode;
+
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
                         qrbox: { width: 250, height: 250 },
                         aspectRatio: 1.0
                     },
-                    /* verbose= */ false
+                    (decodedText) => {
+                        handleAttendance(decodedText);
+                    },
+                    (errorMessage) => {
+                        // ignore scan errors (no QR code found)
+                    }
                 );
-
-                scannerRef.current.render(onScanSuccess, onScanFailure);
+            } catch (err) {
+                console.error("Camera start error:", err);
+                setError("Failed to access camera. Please ensure you have granted camera permissions. Error: " + err);
+                setIsScanning(false);
             }
-        }, 100);
+        };
+
+        const timer = setTimeout(startScanner, 100);
 
         return () => {
             clearTimeout(timer);
-            if (scannerRef.current) {
-                scannerRef.current.clear().catch(error => {
-                    console.error("Failed to clear html5-qrcode scanner. ", error);
-                });
+            if (scannerRef.current && scannerRef.current.isScanning) {
+                scannerRef.current.stop().then(() => {
+                    scannerRef.current?.clear();
+                }).catch(err => console.error("Stop failed", err));
             }
         };
     }, []);
-
-    const onScanSuccess = async (decodedText: string, decodedResult: any) => {
-        // Handle the scanned code as user ID
-        if (isScanning) {
-            handleAttendance(decodedText);
-        }
-    };
-
-    const onScanFailure = (error: any) => {
-        // handle scan failure, usually better to ignore and keep scanning.
-        // console.warn(`Code scan error = ${error}`);
-    };
 
     const handleAttendance = async (userId: string) => {
         if (!scannerRef.current) return;
         
         // Pause scanning to process
-        scannerRef.current.pause(); 
+        try {
+             await scannerRef.current.pause();
+        } catch(e) { console.warn("Pause failed", e); }
+        
         setIsScanning(false);
 
         const result = await markAttendance(userId);
         setScanResult(result);
     };
 
-    const resetScanner = () => {
+    const resetScanner = async () => {
         setScanResult(null);
         setIsScanning(true);
         if (scannerRef.current) {
-            scannerRef.current.resume();
+            try {
+                await scannerRef.current.resume();
+            } catch (e) {
+                 console.warn("Resume failed, restarting", e);
+                 // Reload page as fallback if resume fails often
+                 window.location.reload();
+            }
         }
     };
 
@@ -73,9 +85,23 @@ export default function AttendanceScanner() {
         <div className="max-w-md mx-auto p-4 flex flex-col items-center gap-6 min-h-screen">
             <h1 className="text-2xl font-bold text-center">Scan Attendance</h1>
             
+            {/* Error Message */}
+            {error && (
+                <div className="w-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center">
+                    <p className="font-bold">Camera Error</p>
+                    <p className="text-sm">{error}</p>
+                    <button onClick={() => window.location.reload()} className="mt-2 text-xs underline">Retry</button>
+                </div>
+            )}
+
             {/* Scanner Container */}
-            <div className={`w-full bg-black rounded-lg overflow-hidden ${!isScanning && "hidden"}`}>
-                 <div id="reader" className="w-full"></div>
+            <div className={`w-full bg-black rounded-lg overflow-hidden relative ${!isScanning && "hidden"}`} style={{ minHeight: "300px" }}>
+                 <div id="reader" className="w-full h-full"></div>
+                 {isScanning && !error && (
+                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                         <div className="w-64 h-64 border-2 border-white/50 rounded-lg"></div>
+                     </div>
+                 )}
             </div>
 
             {/* Result Display */}
@@ -136,16 +162,6 @@ export default function AttendanceScanner() {
             <div className="text-xs text-muted-foreground text-center mt-auto pb-4">
                 Point camera at QR code on ID card
             </div>
-
-            {/* Force CSS for scanner to look better */}
-            <style jsx global>{`
-                #reader__scan_region {
-                    background: white;
-                }
-                #reader__dashboard_section_csr span {
-                    display: none;
-                }
-            `}</style>
         </div>
     );
 }

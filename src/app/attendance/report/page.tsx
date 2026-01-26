@@ -12,7 +12,7 @@ export default async function AttendanceReportPage({
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
     const dateParam = searchParams.date as string | undefined;
-    const initialDate = dateParam || new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const initialDate = dateParam || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD in IST
 
     // Fetch data
     const { success, data } = await getAttendanceReport(initialDate);
