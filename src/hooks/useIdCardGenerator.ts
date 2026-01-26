@@ -5,7 +5,7 @@ import { IUser } from "@/models/User";
 import { getTemplateConfig } from "@/actions/settings-actions";
 import { ITemplateConfig } from "@/models/TemplateConfig";
 
-const TEMPLATE_URL = "/id-card-template.png";
+const TEMPLATE_URL = "/id-card-vertical-template.jpg";
 
 export function useIdCardGenerator() {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -20,9 +20,9 @@ export function useIdCardGenerator() {
             const ctx = canvas.getContext("2d");
             if (!ctx) throw new Error("Canvas context not supported");
 
-            // 1. Setup Canvas (Fixed 675x425 matching Editor)
-            const EDITOR_WIDTH = 675;
-            const EDITOR_HEIGHT = 425;
+            // 1. Setup Canvas (Fixed 768x1240 matching Editor)
+            const EDITOR_WIDTH = 768;
+            const EDITOR_HEIGHT = 1240;
             canvas.width = EDITOR_WIDTH;
             canvas.height = EDITOR_HEIGHT;
 
@@ -46,31 +46,64 @@ export function useIdCardGenerator() {
                     const y = config.imageArea.y;
                     const boxWidth = config.imageArea.width || 250;
                     const boxHeight = config.imageArea.height || 300;
-                    const radius = 10; // Fixed radius
+                    // We use the smaller dimension for the circle radius
+                    const radius = Math.min(boxWidth, boxHeight) / 2;
 
-                    // Aspect Ratio Logic (User Request: Match Height, Center & Crop Width)
-                    const imgAspect = userImg.width / userImg.height;
-                    const renderHeight = boxHeight;
-                    const renderWidth = boxHeight * imgAspect;
-
-                    // Center the image horizontally: (Container Width - Image Width) / 2
-                    const offsetX = (boxWidth - renderWidth) / 2;
+                    // Calculate center of the box
+                    const centerX = x + boxWidth / 2;
+                    const centerY = y + boxHeight / 2;
 
                     ctx.save();
-                    // Clip to the defined box
-                    roundedRect(ctx, x, y, boxWidth, boxHeight, radius);
+                    // Clip to the circular region
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.closePath();
                     ctx.clip();
-                    // Draw image centered
-                    ctx.drawImage(userImg, x + offsetX, y, renderWidth, renderHeight);
+
+                    // Draw image to cover the circle area
+                    // We need to calculate draw dimensions to cover the circle (like object-fit: cover)
+                    const imgAspect = userImg.width / userImg.height;
+                    const boxAspect = boxWidth / boxHeight; // Or actually 1:1 for circle ideally
+
+                    let drawWidth, drawHeight, offsetX, offsetY;
+
+                    // For a circle, we want to cover a square area of size (radius*2) x (radius*2)
+                    // effectively centered at (centerX, centerY)
+                    const coverSize = radius * 2;
+
+                    if (imgAspect > 1) {
+                        // Image is wider, fit height
+                        drawHeight = coverSize;
+                        drawWidth = coverSize * imgAspect;
+                        offsetX = centerX - drawWidth / 2;
+                        offsetY = centerY - drawHeight / 2;
+                    } else {
+                        // Image is taller or square, fit width
+                        drawWidth = coverSize;
+                        drawHeight = coverSize / imgAspect;
+                        offsetX = centerX - drawWidth / 2;
+                        offsetY = centerY - drawHeight / 2;
+                    }
+
+
+                    ctx.drawImage(userImg, offsetX, offsetY, drawWidth, drawHeight);
                     ctx.restore();
 
-                    // Draw Black Border (User Request)
+                    // Optional: Draw Circular Border if desired (User didn't explicitly ask for border change but good for consistency)
+                    // Keeping previous border logic but adapted for circle if needed, or removing if not requested.
+                    // The prompt said "image is now should be circular".
+                    // Let's add a simple border stroke around the circle for definition if previously it had one.
+
+                    /*
                     ctx.save();
                     ctx.lineWidth = 2;
                     ctx.strokeStyle = "#000000";
-                    roundedRect(ctx, x, y, boxWidth, boxHeight, radius);
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
                     ctx.stroke();
                     ctx.restore();
+                    */
+
                 } catch (e) {
                     console.error("Failed to load user image", e);
                     // Fallback
@@ -78,9 +111,13 @@ export function useIdCardGenerator() {
                     const y = config.imageArea.y;
                     const width = config.imageArea.width || 250;
                     const height = config.imageArea.height || 300;
+                    const radius = Math.min(width, height) / 2;
+                    const centerX = x + width / 2;
+                    const centerY = y + height / 2;
 
                     ctx.fillStyle = "#ccc";
-                    roundedRect(ctx, x, y, width, height, 10);
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
@@ -90,13 +127,8 @@ export function useIdCardGenerator() {
                 const field = config.fields[fieldKey];
                 if (!field || !field.enabled) return;
 
-                // Editor Padding Offsets (approx 8px X, 4px Y visually)
-                // This aligns the text baseline with the visual editor box
-                const PADDING_X = 8;
-                const PADDING_Y = 4;
-
-                const finalX = field.x + PADDING_X;
-                const finalY = field.y + PADDING_Y;
+                const finalX = field.x;
+                const finalY = field.y;
 
                 ctx.fillStyle = field.color;
                 ctx.textBaseline = "top";
@@ -104,11 +136,23 @@ export function useIdCardGenerator() {
                 ctx.fillText(text, finalX, finalY);
             };
 
+            const formatDate = (date: string | Date) => {
+                try {
+                    const d = new Date(date);
+                    const day = d.getDate().toString().padStart(2, '0');
+                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                    return `${day}/${month}`;
+                } catch {
+                    return "";
+                }
+            };
+
             drawText('name', user.name);
             drawText('seva', `${user.seva}`);
             drawText('mobile', `${user.mobileNumber}`);
             drawText('gaam', `${user.gaam}`);
-            drawText('duration', `${new Date(user.sevaDuration.startDate).toLocaleDateString()} - ${new Date(user.sevaDuration.endDate).toLocaleDateString()}`);
+            drawText('startDate', formatDate(user.sevaDuration.startDate));
+            drawText('endDate', formatDate(user.sevaDuration.endDate));
 
             // 6. Download
             // We want it high quality, but for ID cards PNG is fine at this resolution

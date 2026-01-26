@@ -19,7 +19,8 @@ export interface ITemplateConfig {
         seva: IFieldConfig;
         mobile: IFieldConfig;
         gaam: IFieldConfig;
-        duration: IFieldConfig;
+        startDate: IFieldConfig;
+        endDate: IFieldConfig;
     };
     updatedAt?: Date;
 }
@@ -43,11 +44,17 @@ const TemplateConfigSchema = new Schema<ITemplateConfig>(
             seva: { type: FieldConfigSchema, required: true },
             mobile: { type: FieldConfigSchema, required: true },
             gaam: { type: FieldConfigSchema, required: true },
-            duration: { type: FieldConfigSchema, required: true },
+            startDate: { type: FieldConfigSchema, required: true },
+            endDate: { type: FieldConfigSchema, required: true },
         },
     },
     { timestamps: true }
 );
+
+// Prevent Mongoose from creating multiple models in development
+if (mongoose.models.TemplateConfig) {
+    delete mongoose.models.TemplateConfig;
+}
 
 const TemplateConfig = models.TemplateConfig || model<ITemplateConfig>("TemplateConfig", TemplateConfigSchema);
 

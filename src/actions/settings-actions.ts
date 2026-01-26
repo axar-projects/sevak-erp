@@ -11,22 +11,36 @@ const DEFAULT_CONFIG: Partial<ITemplateConfig> = {
         seva: { x: 350, y: 240, fontSize: 24, color: "#5D4037", label: "Seva", enabled: true },
         mobile: { x: 350, y: 290, fontSize: 24, color: "#5D4037", label: "Mobile", enabled: true },
         gaam: { x: 350, y: 340, fontSize: 24, color: "#5D4037", label: "Gaam", enabled: true },
-        duration: { x: 350, y: 390, fontSize: 24, color: "#5D4037", label: "Duration", enabled: true },
+        startDate: { x: 350, y: 390, fontSize: 24, color: "#5D4037", label: "Start Date", enabled: true },
+        endDate: { x: 500, y: 390, fontSize: 24, color: "#5D4037", label: "End Date", enabled: true },
     },
 };
 
 export async function getTemplateConfig() {
     try {
         await connectToDatabase();
-        let config = await TemplateConfig.findOne({});
+        let config = await TemplateConfig.findOne({}).lean();
 
         if (!config) {
-            // If no config exists, return default (but don't save it yet to avoid clutter unless they save)
-            // Or we can just return plain object
+            // If no config exists, return default
             return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
         }
 
-        return JSON.parse(JSON.stringify(config));
+        // Migration on Read: Ensure new fields exist if they are missing in DB
+        const configObj = JSON.parse(JSON.stringify(config));
+
+        if (!configObj.fields.startDate) {
+            configObj.fields.startDate = DEFAULT_CONFIG.fields?.startDate;
+        }
+        if (!configObj.fields.endDate) {
+            configObj.fields.endDate = DEFAULT_CONFIG.fields?.endDate;
+        }
+        // Remove legacy duration field from the UI object so it doesn't show up
+        if (configObj.fields.duration) {
+            delete configObj.fields.duration;
+        }
+
+        return configObj;
     } catch (error) {
         console.error("Error fetching template config:", error);
         return JSON.parse(JSON.stringify(DEFAULT_CONFIG));

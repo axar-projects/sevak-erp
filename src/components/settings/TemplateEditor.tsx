@@ -12,6 +12,7 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
   const [config, setConfig] = useState<ITemplateConfig>(initialConfig);
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [zoom, setZoom] = useState(0.5); // Default zoom 50%
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Drag State
@@ -34,8 +35,8 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragging || !containerRef.current) return;
 
-      const deltaX = e.clientX - dragging.startX;
-      const deltaY = e.clientY - dragging.startY;
+      const deltaX = (e.clientX - dragging.startX) / zoom; // Adjust for zoom
+      const deltaY = (e.clientY - dragging.startY) / zoom;
       
       const newX = Math.max(0, dragging.initialLeft + deltaX);
       const newY = Math.max(0, dragging.initialTop + deltaY);
@@ -91,25 +92,30 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
   };
 
   // Fixed Dimensions as per User Request
-  const EDITOR_WIDTH = 675;
-  const EDITOR_HEIGHT = 425;
+  const EDITOR_WIDTH = 768;
+  const EDITOR_HEIGHT = 1240;
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-100px)]">
         
       {/* Visual Editor Canvas */}
-      <div className="flex-1 bg-muted/20 border border-border rounded-xl overflow-hidden relative flex items-center justify-center p-8 overflow-y-auto">
-         {/* Fixed Size Container */}
-        <div 
-            ref={containerRef}
-            className="relative shadow-2xl bg-white select-none shrink-0"
-            style={{ 
-                width: `${EDITOR_WIDTH}px`, 
-                height: `${EDITOR_HEIGHT}px` 
-            }} 
-        >
+        <div className="flex-1 bg-muted/20 border border-border rounded-xl overflow-hidden relative flex items-start justify-center p-8 overflow-auto">
+         {/* Transforming Container */}
+         <div style={{ 
+             transform: `scale(${zoom})`, 
+             transformOrigin: "top center",
+             transition: "transform 0.1s ease-out"
+         }}>
+            <div 
+                ref={containerRef}
+                className="relative shadow-2xl bg-white select-none shrink-0 overflow-hidden" 
+                style={{ 
+                    width: `${EDITOR_WIDTH}px`, 
+                    height: `${EDITOR_HEIGHT}px` 
+                }} 
+            >
             <img 
-                src="/id-card-template.png" 
+                src="/id-card-vertical-template.jpg" 
                 alt="Template" 
                 className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-50" 
             />
@@ -121,9 +127,9 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                 style={{
                     left: config.imageArea.x,
                     top: config.imageArea.y,
-                    width: config.imageArea.width || 250,
+                    width: config.imageArea.width || 300, // Default larger square
                     height: config.imageArea.height || 300,
-                    borderRadius: "12px", // Visual cue
+                    borderRadius: "50%", 
                 }}
             >
                 Photo Area
@@ -148,14 +154,16 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                      key === 'seva' ? "Premvati Vibhag" :
                      key === 'mobile' ? "98765 43210" :
                      key === 'gaam' ? "Upleta" :
-                     key === 'duration' ? "01/01/2026 - 05/01/2026" : field.label}
+                     key === 'startDate' ? "01/01" : 
+                     key === 'endDate' ? "05/01" : field.label}
                 </div>
             ))}
+        </div>
         </div>
       </div>
 
       {/* Sidebar Controls */}
-      <div className="w-full lg:w-80 flex-shrink-0 bg-card border border-border rounded-xl p-6 flex flex-col gap-6 overflow-y-auto">
+      <div className="w-full lg:w-80 flex-shrink-0 bg-card border border-border rounded-xl p-6 flex flex-col gap-6 overflow-y-auto h-full">
         <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Properties</h2>
             <button 
@@ -165,6 +173,23 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
             >
                 {isSaving ? "Saving..." : "Save Layout"}
             </button>
+        </div>
+
+        {/* Zoom Control */}
+        <div className="space-y-2 pb-4 border-b border-border">
+            <label className="text-xs font-medium text-muted-foreground uppercase flex justify-between">
+                <span>View Zoom</span>
+                <span>{Math.round(zoom * 100)}%</span>
+            </label>
+            <input 
+                type="range" 
+                min="0.2" 
+                max="1.5" 
+                step="0.1"
+                value={zoom}
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className="w-full accent-primary"
+            />
         </div>
         
         <div className="h-px bg-border" />
