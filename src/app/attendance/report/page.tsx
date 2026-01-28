@@ -9,9 +9,10 @@ export const dynamic = "force-dynamic";
 export default async function AttendanceReportPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const dateParam = searchParams.date as string | undefined;
+    const { date } = await searchParams;
+    const dateParam = date as string | undefined;
     const initialDate = dateParam || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD in IST
 
     // Fetch data

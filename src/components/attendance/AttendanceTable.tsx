@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface AttendanceRecord {
@@ -33,6 +33,11 @@ export default function AttendanceTable({ initialDate, reportData }: AttendanceT
         setIsLoading(true);
         router.push(`/attendance/report?date=${newDate}`);
     };
+
+    // Reset loading state when data updates
+    useEffect(() => {
+        setIsLoading(false);
+    }, [initialDate, reportData]);
 
     return (
         <div className="bg-white rounded-lg shadow overflow-hidden">
