@@ -109,26 +109,26 @@ export default function UserList({ users }: { users: IUser[] }) {
               key={user._id}
               className="group relative flex flex-col rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md"
             >
-              {/* Action Buttons (Visible on Hover/Focus) */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-10">
+              {/* Action Buttons (Visible on Mobile, Hover on Desktop) */}
+              <div className="absolute top-2 right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col gap-2 z-10">
                 <button
                   onClick={() => generateIdCard(user)}
                   disabled={isGenerating}
-                  className="p-2 rounded-full bg-background border border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors shadow-sm disabled:opacity-50"
+                  className="p-2 rounded-full bg-background border border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                   title="Download ID Card"
                 >
                   <IdCardIcon />
                 </button>
                 <button
                   onClick={() => setEditingUser(user)}
-                  className="p-2 rounded-full bg-background border border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors shadow-sm"
+                  className="p-2 rounded-full bg-background border border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors shadow-sm cursor-pointer"
                   title="Edit"
                 >
                   <EditIcon />
                 </button>
                 <button
                   onClick={() => setDeletingUser(user)}
-                  className="p-2 rounded-full bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive transition-colors shadow-sm"
+                  className="p-2 rounded-full bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive transition-colors shadow-sm cursor-pointer"
                   title="Delete"
                 >
                   <TrashIcon />
@@ -139,11 +139,11 @@ export default function UserList({ users }: { users: IUser[] }) {
                 {/* Avatar */}
                 <div className="flex-shrink-0">
                   {user.imageUrl ? (
-                    <img
-                      src={user.imageUrl}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-lg object-cover border border-border"
-                    />
+                      <img
+                        src={getThumbnailUrl(user.imageUrl)}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-lg object-cover border border-border"
+                      />
                   ) : (
                     <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center border border-transparent text-secondary-foreground font-semibold text-lg">
                       {user.name.charAt(0).toUpperCase()}
@@ -230,4 +230,25 @@ export default function UserList({ users }: { users: IUser[] }) {
       </Modal>
     </>
   );
+}
+
+// Helper to transform Cloudinary URL for thumbnails
+function getThumbnailUrl(url: string) {
+    if (!url) return "";
+    // If it already has sizing, we replace it. If not, we insert it.
+    // Cloudinary standard upload URL format: .../upload/v1234...
+    // Or our custom one: .../upload/c_crop.../v123...
+    
+    // Check if we have our custom w_800
+    if (url.includes("w_800,h_800")) {
+        return url.replace("w_800,h_800", "w_100,h_100");
+    }
+    
+    // Generic injection if it's a raw cloudinary url
+    const parts = url.split('/upload/');
+    if (parts.length === 2 && !url.includes("w_100")) {
+        return `${parts[0]}/upload/w_100,h_100,c_fill/${parts[1]}`;
+    }
+    
+    return url;
 }

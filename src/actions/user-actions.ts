@@ -62,43 +62,32 @@ export async function deleteUser(id: string, imageUrl?: string) {
         await connectToDatabase();
 
         // 1. Delete image from Cloudinary if it exists
+        // 1. Delete image from Cloudinary if it exists
         if (imageUrl) {
-            // Extract public_id from URL
-            // Example: https://res.cloudinary.com/demo/image/upload/v1234567890/sevak_preset/my_image.jpg
-            const regex = /\/v\d+\/([^/]+)\./;
-            const match = imageUrl.match(regex);
-            // Or simpler: usually it's just folder/filename without extension if signed, but with unsigned implementation often just filename
-            // Actually user-actions usually gets just the URL. 
-            // For Cloudinary 'destroy', we need the public_id.
-            // A robust way to store public_id is better, but parsing is common for simple apps.
-            // Assuming standard URL structure:
-            const parts = imageUrl.split('/');
-            const filename = parts[parts.length - 1]; // my_image.jpg
-            const publicId = filename.split('.')[0]; // my_image
+            // Robust Public ID Extraction
+            // Supports:
+            // - Standard: .../upload/v1234/folder/id.jpg
+            // - Transformed: .../upload/c_crop,w_100/v1234/folder/id.jpg
+            // - No version (less common but possible): .../upload/folder/id.jpg (Hardware implementation dependent)
 
-            // If using a preset folder, it might be folder/id.
-            // Let's rely on finding standard upload format parts if possible or store public_id in DB next time.
-            // For now, let's try to destroy just the ID part.
+            try {
+                // Regex matches:
+                // /upload/ -> literal
+                // (?:.*\/)? -> optional transformations (greedy match until version) OR just folder structure if no version?
+                // Actually safer to rely on 'v<numbers>/' pattern which is standard for Signed/Widget uploads.
 
-            // Better approach: User CldUploadWidget returns public_id. We should probably save it.
-            // But 'IUser' doesn't have public_id field.
-            // As a fallback for this task, we will attempt to extract it or just proceed with DB delete if it fails.
+                // Pattern: .../upload/[transformations/]?v[version]/[public_id].[ext]
+                const regex = /\/upload\/(?:[^/]+\/)*v\d+\/(.+)$/;
+                const match = imageUrl.match(regex);
 
-            // Heuristic:
-            // https://res.cloudinary.com/cloudname/image/upload/v1731231/sevak_preset/abc.jpg
-            // public_id = sevak_preset/abc
-
-            const urlParts = imageUrl.split('/upload/');
-            if (urlParts.length === 2) {
-                let publicIdWithVer = urlParts[1]; // v1731231/sevak_preset/abc.jpg
-                // Remove version if present (starts with v and digits)
-                const versionRegex = /^v\d+\//;
-                let publicIdPath = publicIdWithVer.replace(versionRegex, ''); // sevak_preset/abc.jpg
-
-                // Remove extension
-                const publicId = publicIdPath.substring(0, publicIdPath.lastIndexOf('.'));
-
-                await cloudinary.uploader.destroy(publicId);
+                if (match && match[1]) {
+                    const publicIdWithExt = match[1];
+                    // Remove extension
+                    const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+                    await cloudinary.uploader.destroy(publicId);
+                }
+            } catch (e) {
+                console.error("Failed to parse/delete Cloudinary image:", e);
             }
         }
 

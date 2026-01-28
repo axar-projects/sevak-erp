@@ -58,7 +58,44 @@ export default function UserForm({ action, initialData, onSuccess, submitLabel =
             <span className="text-sm font-medium leading-none text-muted-foreground">Profile Photo</span>
             <CldUploadWidget
               uploadPreset="sevak_preset"
-              onSuccess={(result: any) => setImageUrl(result.info.secure_url)}
+              options={{
+                multiple: false,
+                maxImageWidth: 800,
+                maxImageHeight: 800,
+                cropping: true,
+                croppingAspectRatio: 1.0,
+                showSkipCropButton: false,
+                sources: ['local', 'camera'],
+              }}
+              onSuccess={(result: any) => {
+                const info = result.info;
+                let url = info.secure_url;
+
+                // The widget returns coordinates.custom[0] which can be an array [x, y, w, h] or object
+                if (info.coordinates?.custom?.[0]) {
+                    const coords = info.coordinates.custom[0];
+                    let x, y, width, height;
+
+                    if (Array.isArray(coords)) {
+                        [x, y, width, height] = coords;
+                    } else {
+                        ({ x, y, width, height } = coords);
+                    }
+
+                    // Validate we have numbers
+                    if (typeof x === 'number' && typeof y === 'number' && typeof width === 'number' && typeof height === 'number') {
+                         // Construct transformation string: crop first, then resize to target 800x800
+                        const transformation = `c_crop,x_${x},y_${y},w_${width},h_${height}/w_800,h_800,c_fit`;
+                        
+                        // Inject into URL after /upload/
+                        const parts = url.split('/upload/');
+                        if (parts.length === 2) {
+                            url = `${parts[0]}/upload/${transformation}/${parts[1]}`;
+                        }
+                    }
+                }
+                setImageUrl(url);
+              }}
             >
               {({ open }) => (
                 <div
