@@ -7,6 +7,7 @@ import Modal from "./ui/Modal";
 import UserForm from "./forms/UserForm";
 
 import { useIdCardGenerator } from "@/hooks/useIdCardGenerator";
+import { getThumbnailUrl } from "@/lib/utils";
 
 // Icons 
 const PhoneIcon = () => (<svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>);
@@ -232,23 +233,4 @@ export default function UserList({ users }: { users: IUser[] }) {
   );
 }
 
-// Helper to transform Cloudinary URL for thumbnails
-function getThumbnailUrl(url: string) {
-    if (!url) return "";
-    // If it already has sizing, we replace it. If not, we insert it.
-    // Cloudinary standard upload URL format: .../upload/v1234...
-    // Or our custom one: .../upload/c_crop.../v123...
-    
-    // Check if we have our custom w_800
-    if (url.includes("w_800,h_800")) {
-        return url.replace("w_800,h_800", "w_100,h_100");
-    }
-    
-    // Generic injection if it's a raw cloudinary url
-    const parts = url.split('/upload/');
-    if (parts.length === 2 && !url.includes("w_100")) {
-        return `${parts[0]}/upload/w_100,h_100,c_fill/${parts[1]}`;
-    }
-    
-    return url;
-}
+

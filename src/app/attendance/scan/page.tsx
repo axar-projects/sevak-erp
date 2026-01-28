@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { markAttendance } from "@/actions/attendance-actions";
+import { getThumbnailUrl } from "@/lib/utils";
 
 export default function AttendanceScanner() {
     const [scanResult, setScanResult] = useState<{ success: boolean; message: string; user?: any; status?: string } | null>(null);
@@ -117,7 +118,7 @@ export default function AttendanceScanner() {
                          <>
                             <div className={`w-24 h-24 rounded-full overflow-hidden mb-2 border-4 ${scanResult.status === 'duplicate' ? 'border-orange-400' : 'border-green-500'}`}>
                                 {scanResult.user?.imageUrl ? (
-                                    <img src={scanResult.user.imageUrl} alt="User" className="w-full h-full object-cover" />
+                                    <img src={getThumbnailUrl(scanResult.user.imageUrl)} alt="User" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-4xl bg-gray-200">👤</div>
                                 )}

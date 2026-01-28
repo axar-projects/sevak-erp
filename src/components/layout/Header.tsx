@@ -33,7 +33,7 @@ export default function Header() {
                 </svg>
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">
-                Sevak ERP
+                Dashabdi Sevak ERP
               </span>
             </Link>
           </div>

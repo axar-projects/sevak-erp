@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sevak ERP",
+  title: "Dashabdi Sevak ERP",
   description: "Manage your sevaks efficiently",
 };
 
