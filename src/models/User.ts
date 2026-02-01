@@ -7,6 +7,7 @@ export interface IUser {
   seva: string;               // The type of service/duty
   mobileNumber: string;       // String is better than Number to keep leading zeros
   gaam: string;               // Village or City
+  uniqueId: string;           // 4-digit unique ID
   imageUrl?: string;          // We store the LINK to the image, not the file itself
   sevaDuration: {
     startDate: Date;
@@ -35,6 +36,11 @@ const UserSchema = new Schema<IUser>(
       type: String,
       required: [true, "Gaam/City is required"],
     },
+    uniqueId: {
+      type: String,
+      unique: true,
+      index: true,
+    },
     imageUrl: {
       type: String,
       required: false, // Optional, in case they don't have a photo yet
@@ -57,7 +63,11 @@ const UserSchema = new Schema<IUser>(
 
 // 3. Model Creation (With Hot-Reload fix)
 // Next.js tries to rebuild models every time you save a file.
-// We check 'models.User' first to prevent "OverwriteModelError".
+// We delete the model if it exists to ensure new schema changes are picked up in dev
+if (process.env.NODE_ENV === "development" && models.User) {
+  delete models.User;
+}
+
 const User = models.User || model<IUser>("User", UserSchema);
 
 export default User;

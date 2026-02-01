@@ -9,6 +9,8 @@ export interface IFieldConfig {
     enabled: boolean;
     width?: number; // Optional width constraint
     height?: number; // Optional height constraint (mostly for image)
+    rotation?: number; // Degrees
+    fontWeight?: string; // 'bold', '900', etc.
 }
 
 export interface ITemplateConfig {
@@ -22,6 +24,7 @@ export interface ITemplateConfig {
         startDate: IFieldConfig;
         endDate: IFieldConfig;
         qrCode: IFieldConfig; // NEW: QR Code configuration
+        uniqueId: IFieldConfig;
     };
     updatedAt?: Date;
 }
@@ -35,6 +38,8 @@ const FieldConfigSchema = new Schema<IFieldConfig>({
     enabled: { type: Boolean, default: true },
     width: { type: Number },
     height: { type: Number },
+    rotation: { type: Number, default: 0 },
+    fontWeight: { type: String, default: "normal" },
 }, { _id: false });
 
 const TemplateConfigSchema = new Schema<ITemplateConfig>(
@@ -48,13 +53,14 @@ const TemplateConfigSchema = new Schema<ITemplateConfig>(
             startDate: { type: FieldConfigSchema, required: true },
             endDate: { type: FieldConfigSchema, required: true },
             qrCode: { type: FieldConfigSchema, required: true },
+            uniqueId: { type: FieldConfigSchema, required: true },
         },
     },
     { timestamps: true }
 );
 
 // Prevent Mongoose from creating multiple models in development
-if (mongoose.models.TemplateConfig) {
+if (process.env.NODE_ENV === "development" && mongoose.models.TemplateConfig) {
     delete mongoose.models.TemplateConfig;
 }
 

@@ -14,6 +14,23 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+async function generateUniqueId() {
+    let uniqueId = "";
+    let isUnique = false;
+
+    while (!isUnique) {
+        // Generate random number between 1000 and 9999
+        uniqueId = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // Check collision
+        const existingUser = await User.findOne({ uniqueId });
+        if (!existingUser) {
+            isUnique = true;
+        }
+    }
+    return uniqueId;
+}
+
 export async function addUser(prevState: any, formData: FormData) {
     try {
         await connectToDatabase();
@@ -26,7 +43,10 @@ export async function addUser(prevState: any, formData: FormData) {
         const endDate = formData.get("endDate") as string;
         const imageUrl = formData.get("imageUrl") as string;
 
+        const uniqueId = await generateUniqueId();
+
         await User.create({
+            uniqueId,
             name,
             seva,
             mobileNumber,

@@ -64,13 +64,20 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
       if (id === "imageArea") {
         return { ...prev, imageArea: { ...prev.imageArea, ...updates } };
       }
-      if (id === "qrCode") {
+       if (id === "qrCode") {
            // Create a safe copy of fields to avoid mutation issues, though deep clone is better
            const newFields = { ...prev.fields };
            if (newFields.qrCode) {
                newFields.qrCode = { ...newFields.qrCode, ...updates };
            }
            return { ...prev, fields: newFields };
+      }
+      if (id === "uniqueId") {
+            const newFields = { ...prev.fields };
+            if (newFields.uniqueId) {
+                newFields.uniqueId = { ...newFields.uniqueId, ...updates };
+            }
+            return { ...prev, fields: newFields };
       }
       return {
         ...prev,
@@ -97,6 +104,7 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
   const getField = (id: string): IFieldConfig => {
     if (id === "imageArea") return config.imageArea;
     if (id === "qrCode") return config.fields.qrCode;
+    if (id === "uniqueId") return config.fields.uniqueId;
     return (config.fields as any)[id];
   };
 
@@ -174,7 +182,9 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                         fontSize: field.fontSize,
                         color: field.color,
                         fontFamily: "Arial, sans-serif",
-                        fontWeight: key === 'name' ? 'bold' : 'normal',
+                        fontWeight: field.fontWeight || (key === 'name' ? 'bold' : 'normal'),
+                        transform: field.rotation ? `rotate(${field.rotation}deg)` : "none",
+                        transformOrigin: "center center",
                     }}
                 >
                     {key === 'name' ? "Rameshbhai Patel" : 
@@ -182,7 +192,8 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                      key === 'mobile' ? "98765 43210" :
                      key === 'gaam' ? "Upleta" :
                      key === 'startDate' ? "01/01" : 
-                     key === 'endDate' ? "05/01" : field.label}
+                     key === 'endDate' ? "05/01" : 
+                     key === 'uniqueId' ? "4082" : field.label}
                 </div>
             )})}
         </div>

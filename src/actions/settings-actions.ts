@@ -14,6 +14,7 @@ const DEFAULT_CONFIG: Partial<ITemplateConfig> = {
         startDate: { x: 350, y: 390, fontSize: 24, color: "#5D4037", label: "Start Date", enabled: true },
         endDate: { x: 500, y: 390, fontSize: 24, color: "#5D4037", label: "End Date", enabled: true },
         qrCode: { x: 50, y: 900, fontSize: 0, color: "#FFFFFF", label: "QR Code", enabled: true, width: 200, height: 200 },
+        uniqueId: { x: 50, y: 850, fontSize: 32, color: "#FFFFFF", label: "Unique ID", enabled: true, fontWeight: "900", rotation: -90 },
     },
 };
 
@@ -41,6 +42,17 @@ export async function getTemplateConfig() {
         } else if (configObj.fields.qrCode.color === "#000000") {
             // Migration: Force white if it relies on schema default black, as we want white for this template
             configObj.fields.qrCode.color = DEFAULT_CONFIG.fields?.qrCode?.color || "#FFFFFF";
+        }
+        if (!configObj.fields.uniqueId) {
+            configObj.fields.uniqueId = DEFAULT_CONFIG.fields?.uniqueId;
+        } else {
+            // Enforce specific styling requested by user if not already set or even if set? 
+            // Ideally we just ensure properties exist.
+            if (configObj.fields.uniqueId.rotation === undefined) configObj.fields.uniqueId.rotation = -90;
+            if (configObj.fields.uniqueId.fontWeight === undefined) configObj.fields.uniqueId.fontWeight = "900";
+            // Force update for user satisfaction
+            configObj.fields.uniqueId.fontWeight = "900";
+            configObj.fields.uniqueId.rotation = -90;
         }
         // Remove legacy duration field from the UI object so it doesn't show up
         if (configObj.fields.duration) {

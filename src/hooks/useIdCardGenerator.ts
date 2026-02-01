@@ -131,10 +131,49 @@ export function useIdCardGenerator() {
                 const finalX = field.x;
                 const finalY = field.y;
 
+                // Editor Padding matches Tailwind px-2 (8px) py-1 (4px)
+                const PAD_X = 8;
+                const PAD_Y = 4;
+
+                ctx.save();
+
+                // Font Settings
+                const weight = field.fontWeight || (fieldKey === 'name' ? 'bold' : 'normal');
+                ctx.font = `${weight} ${field.fontSize}px Arial`;
                 ctx.fillStyle = field.color;
-                ctx.textBaseline = "top";
-                ctx.font = `${fieldKey === 'name' ? 'bold' : ''} ${field.fontSize}px Arial`;
-                ctx.fillText(text, finalX, finalY);
+
+                // Estimate Line Height (approx 1.2x font size for standard web rendering)
+                const lineHeight = field.fontSize * 1.2;
+
+                if (field.rotation) {
+                    // Match Editor's transform-origin: center center
+                    const metrics = ctx.measureText(text);
+                    const textWidth = metrics.width;
+
+                    // Box dimensions including padding
+                    const boxWidth = textWidth + (PAD_X * 2);
+                    const boxHeight = lineHeight + (PAD_Y * 2);
+
+                    const centerX = finalX + boxWidth / 2;
+                    const centerY = finalY + boxHeight / 2;
+
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate((field.rotation * Math.PI) / 180);
+
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    // Draw at relative (0,0) which is center of box
+                    ctx.fillText(text, 0, 0);
+                } else {
+                    // Standard positioning: Top-Left + Padding
+                    ctx.textAlign = "left";
+                    ctx.textBaseline = "top";
+                    // Vertical adjustment to center text within the line-height box approx
+                    const lineTopOffset = (lineHeight - field.fontSize) / 2;
+                    ctx.fillText(text, finalX + PAD_X, finalY + PAD_Y + lineTopOffset);
+                }
+
+                ctx.restore();
             };
 
             const formatDate = (date: string | Date) => {
@@ -154,6 +193,7 @@ export function useIdCardGenerator() {
             drawText('gaam', `${user.gaam}`);
             drawText('startDate', formatDate(user.sevaDuration.startDate));
             drawText('endDate', formatDate(user.sevaDuration.endDate));
+            drawText('uniqueId', user.uniqueId ? `${user.uniqueId}` : "");
 
             // 6. Draw QR Code
             if (config.fields.qrCode && config.fields.qrCode.enabled) {

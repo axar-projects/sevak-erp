@@ -34,7 +34,7 @@ export default function UserList({ users }: { users: IUser[] }) {
   // Filter Logic
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.mobileNumber.includes(searchTerm);
+                          (user.uniqueId && user.uniqueId.toString().includes(searchTerm));
     const matchesSeva = filterSeva === "All" || user.seva === filterSeva;
     const matchesGaam = filterGaam === "All" || user.gaam === filterGaam;
     return matchesSearch && matchesSeva && matchesGaam;
@@ -69,7 +69,7 @@ export default function UserList({ users }: { users: IUser[] }) {
         <div className="flex-1">
           <input
             type="text"
-            placeholder="Search by name or mobile..."
+            placeholder="Search by name or id number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -161,6 +161,11 @@ export default function UserList({ users }: { users: IUser[] }) {
                     <span className="inline-flex items-center rounded-md border border-transparent bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80">
                       {user.seva}
                     </span>
+                    {user.uniqueId && (
+                      <span className="inline-flex items-center rounded-md border border-transparent bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary transition-colors">
+                        ID: {user.uniqueId}
+                      </span>
+                    )}
                   </div>
 
                   <div className="mt-4 space-y-1.5">
