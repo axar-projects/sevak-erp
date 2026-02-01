@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Dashabdi Sevak ERP",
   description: "Manage your sevaks efficiently",
+  icons: {
+    icon: "/thumb-logo.png",
+  },
 };
 
 export default function RootLayout({

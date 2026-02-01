@@ -125,7 +125,7 @@ export default function UserForm({ action, initialData, onSuccess, submitLabel =
 
           {/* Basic Info */}
           <div className="w-full space-y-4">
-            <InputField label="Full Name" name="name" defaultValue={initialData?.name} placeholder="e.g. Ramesh Bhai Patel" />
+            <InputField label="Full Name" name="name" defaultValue={initialData?.name} placeholder="e.g. Rameshbhai Patel" />
             <div className="space-y-2">
                 <label className="text-sm font-medium leading-none text-muted-foreground">Mobile Number</label>
                 <input
@@ -150,8 +150,8 @@ export default function UserForm({ action, initialData, onSuccess, submitLabel =
         <div className="h-px bg-border my-4" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <InputField label="Seva Type" name="seva" defaultValue={initialData?.seva} placeholder="e.g. Kitchen Duty" />
-          <InputField label="Gaam (City)" name="gaam" defaultValue={initialData?.gaam} placeholder="e.g. Ahmedabad" />
+          <InputField label="Seva Type" name="seva" defaultValue={initialData?.seva} placeholder="e.g. Decoration" />
+          <InputField label="Gaam (City)" name="gaam" defaultValue={initialData?.gaam} placeholder="e.g. Upleta" />
         </div>
 
         <div className="space-y-2">

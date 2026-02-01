@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
+import Attendance from "@/models/Attendance";
 import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary (Server-side only)
@@ -92,6 +93,9 @@ export async function deleteUser(id: string, imageUrl?: string) {
         }
 
         // 2. Delete from DB
+        // Delete associated attendance records first
+        await Attendance.deleteMany({ userId: id });
+
         await User.findByIdAndDelete(id);
 
         revalidatePath("/");
