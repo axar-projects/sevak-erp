@@ -181,8 +181,8 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                         top: field.y,
                         fontSize: field.fontSize,
                         color: field.color,
-                        fontFamily: "Arial, sans-serif",
-                        fontWeight: field.fontWeight || (key === 'name' ? 'bold' : 'normal'),
+                        fontFamily: `${field.fontFamily || "Arial"}, sans-serif`,
+                        fontWeight: field.fontWeight || "normal",
                         transform: field.rotation ? `rotate(${field.rotation}deg)` : "none",
                         transformOrigin: "center center",
                     }}
@@ -255,14 +255,44 @@ export default function TemplateEditor({ initialConfig }: TemplateEditorProps) {
                 </div>
 
                 {selectedField !== "imageArea" && selectedField !== "qrCode" && (
-                    <div className="space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground uppercase">Font Size (px)</label>
-                        <input 
-                            type="number" 
-                            value={getField(selectedField).fontSize} 
-                            onChange={(e) => updateField(selectedField, { fontSize: Number(e.target.value) })}
-                            className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
-                        />
+                    <div className="space-y-4">
+                         <div className="space-y-2">
+                            <label className="text-xs font-medium text-muted-foreground uppercase">Font Family</label>
+                            <select
+                                value={getField(selectedField).fontFamily || "Arial"}
+                                onChange={(e) => updateField(selectedField, { fontFamily: e.target.value })}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            >
+                                <option value="Arial">Arial (System)</option>
+                                <option value="Roboto">Roboto (Google Font)</option>
+                                <option value="Playfair Display">Playfair Display (Google Font)</option>
+                                <option value="Verdana">Verdana (System)</option>
+                                <option value="Times New Roman">Times New Roman (System)</option>
+                                <option value="Courier New">Courier New (System)</option>
+                                <option value="Georgia">Georgia (System)</option>
+                                <option value="Trebuchet MS">Trebuchet MS (System)</option>
+                                <option value="Sandor">Sandor (Custom - Requires File)</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-muted-foreground uppercase">Font Size (px)</label>
+                            <input 
+                                type="number" 
+                                value={getField(selectedField).fontSize} 
+                                onChange={(e) => updateField(selectedField, { fontSize: Number(e.target.value) })}
+                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="bold-check"
+                                checked={getField(selectedField).fontWeight === 'bold'}
+                                onChange={(e) => updateField(selectedField, { fontWeight: e.target.checked ? 'bold' : 'normal' })}
+                                className="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+                            />
+                            <label htmlFor="bold-check" className="text-sm font-medium">Bold Text</label>
+                        </div>
                     </div>
                 )}
                 {selectedField !== "imageArea" && (

@@ -124,7 +124,7 @@ export function useIdCardGenerator() {
             }
 
             // 5. Draw Text Details
-            const drawText = (fieldKey: keyof typeof config.fields, text: string) => {
+            const drawText = async (fieldKey: keyof typeof config.fields, text: string) => {
                 const field = config.fields[fieldKey];
                 if (!field || !field.enabled) return;
 
@@ -138,8 +138,30 @@ export function useIdCardGenerator() {
                 ctx.save();
 
                 // Font Settings
-                const weight = field.fontWeight || (fieldKey === 'name' ? 'bold' : 'normal');
-                ctx.font = `${weight} ${field.fontSize}px Arial`;
+                const weight = field.fontWeight || 'normal';
+                let family = field.fontFamily || 'Arial';
+
+                // Resolve CSS variables for Google Fonts if needed
+                if (family === 'Roboto') {
+                    const resolved = getComputedStyle(document.body).getPropertyValue('--font-roboto');
+                    if (resolved) family = resolved.trim().replace(/"/g, ""); // Remove quotes if present
+                } else if (family === 'Playfair Display') {
+                    const resolved = getComputedStyle(document.body).getPropertyValue('--font-playfair');
+                    if (resolved) family = resolved.trim().replace(/"/g, "");
+                }
+
+                // Construct font string
+                const fontString = `${weight} ${field.fontSize}px "${family}", sans-serif`;
+
+                // IMPORTANT: Ensure font is loaded before drawing
+                // We do this by checking document.fonts.check or load
+                // Since this is inside a loop, it might be slow to await every time, 
+                // but for canvas accuracy it's necessary.
+                // However, `ctx.font` assignment doesn't trigger load. 
+                // We should ideally load all fonts at start of generation, but doing it here is safer for dynamic selections.
+                await document.fonts.load(fontString);
+
+                ctx.font = fontString;
                 ctx.fillStyle = field.color;
 
                 // Estimate Line Height (approx 1.2x font size for standard web rendering)
@@ -187,13 +209,13 @@ export function useIdCardGenerator() {
                 }
             };
 
-            drawText('name', user.name);
-            drawText('seva', `${user.seva}`);
-            drawText('mobile', `${user.mobileNumber}`);
-            drawText('gaam', `${user.gaam}`);
-            drawText('startDate', formatDate(user.sevaDuration.startDate));
-            drawText('endDate', formatDate(user.sevaDuration.endDate));
-            drawText('uniqueId', user.uniqueId ? `${user.uniqueId}` : "");
+            await drawText('name', user.name);
+            await drawText('seva', `${user.seva}`);
+            await drawText('mobile', `${user.mobileNumber}`);
+            await drawText('gaam', `${user.gaam}`);
+            await drawText('startDate', formatDate(user.sevaDuration.startDate));
+            await drawText('endDate', formatDate(user.sevaDuration.endDate));
+            await drawText('uniqueId', user.uniqueId ? `${user.uniqueId}` : "");
 
             // 6. Draw QR Code
             if (config.fields.qrCode && config.fields.qrCode.enabled) {

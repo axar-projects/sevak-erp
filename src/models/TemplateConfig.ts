@@ -11,6 +11,7 @@ export interface IFieldConfig {
     height?: number; // Optional height constraint (mostly for image)
     rotation?: number; // Degrees
     fontWeight?: string; // 'bold', '900', etc.
+    fontFamily?: string; // Font family name
 }
 
 export interface ITemplateConfig {
@@ -40,6 +41,7 @@ const FieldConfigSchema = new Schema<IFieldConfig>({
     height: { type: Number },
     rotation: { type: Number, default: 0 },
     fontWeight: { type: String, default: "normal" },
+    fontFamily: { type: String, default: "Arial" },
 }, { _id: false });
 
 const TemplateConfigSchema = new Schema<ITemplateConfig>(
