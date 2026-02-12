@@ -150,7 +150,7 @@ export default function UserForm({ action, initialData, onSuccess, submitLabel =
         <div className="h-px bg-border my-4" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <InputField label="Seva Type" name="seva" defaultValue={initialData?.seva} placeholder="e.g. Decoration" />
+          <InputField label="Seva Type" name="seva" defaultValue={initialData?.seva} placeholder="e.g. Decoration" required={false} />
           <InputField label="Gaam (City)" name="gaam" defaultValue={initialData?.gaam} placeholder="e.g. Upleta" />
         </div>
 
@@ -194,7 +194,7 @@ export default function UserForm({ action, initialData, onSuccess, submitLabel =
   );
 }
 
-function InputField({ label, name, type = "text", placeholder, defaultValue }: any) {
+function InputField({ label, name, type = "text", placeholder, defaultValue, required = true }: any) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium leading-none text-muted-foreground">{label}</label>
@@ -203,7 +203,7 @@ function InputField({ label, name, type = "text", placeholder, defaultValue }: a
         type={type}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        required
+        required={required}
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
     </div>

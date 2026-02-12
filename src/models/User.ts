@@ -26,7 +26,8 @@ const UserSchema = new Schema<IUser>(
     },
     seva: {
       type: String,
-      required: [true, "Seva type is required"],
+      required: false,
+      default: "",
     },
     mobileNumber: {
       type: String,

@@ -210,7 +210,7 @@ export function useIdCardGenerator() {
             };
 
             await drawText('name', user.name);
-            await drawText('seva', `${user.seva}`);
+            await drawText('seva', user.seva || "");
             await drawText('mobile', `${user.mobileNumber}`);
             await drawText('gaam', `${user.gaam}`);
             await drawText('startDate', formatDate(user.sevaDuration.startDate));

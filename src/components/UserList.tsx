@@ -82,7 +82,7 @@ export default function UserList({ users }: { users: IUser[] }) {
             className="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
             {uniqueSevas.map(seva => (
-              <option key={seva} value={seva}>{seva === "All" ? "Filter by Seva" : seva}</option>
+              <option key={seva} value={seva}>{seva === "All" ? "Filter by Seva" : (seva || "N/A")}</option>
             ))}
           </select>
         </div>
@@ -159,7 +159,7 @@ export default function UserList({ users }: { users: IUser[] }) {
                   </h3>
                   <div className="mt-1.5 flex flex-wrap gap-2">
                     <span className="inline-flex items-center rounded-md border border-transparent bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80">
-                      {user.seva}
+                      {user.seva || "N/A"}
                     </span>
                     {user.uniqueId && (
                       <span className="inline-flex items-center rounded-md border border-transparent bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary transition-colors">
