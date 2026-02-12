@@ -6,7 +6,7 @@ import { getTemplateConfig } from "@/actions/settings-actions";
 import { ITemplateConfig } from "@/models/TemplateConfig";
 import QRCode from "qrcode";
 
-const TEMPLATE_URL = "/id-card-vertical-template.jpg";
+const TEMPLATE_URL = "/id-card-vertical-template-2.png";
 
 export function useIdCardGenerator() {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -215,7 +215,7 @@ export function useIdCardGenerator() {
             await drawText('gaam', `${user.gaam}`);
             await drawText('startDate', formatDate(user.sevaDuration.startDate));
             await drawText('endDate', formatDate(user.sevaDuration.endDate));
-            await drawText('uniqueId', user.uniqueId ? `${user.uniqueId}` : "");
+            // await drawText('uniqueId', user.uniqueId ? `${user.uniqueId}` : "");
 
             // 6. Draw QR Code
             if (config.fields.qrCode && config.fields.qrCode.enabled) {
