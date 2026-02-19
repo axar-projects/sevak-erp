@@ -6,7 +6,7 @@ import { getTemplateConfig } from "@/actions/settings-actions";
 import { ITemplateConfig } from "@/models/TemplateConfig";
 import QRCode from "qrcode";
 
-const TEMPLATE_URL = "/id-card-vertical-template-2.png";
+const TEMPLATE_URL = "/id-card-vertical-template-3.png";
 
 export function useIdCardGenerator() {
     const [isGenerating, setIsGenerating] = useState(false);
