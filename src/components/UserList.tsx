@@ -28,15 +28,26 @@ export default function UserList({ users }: { users: IUser[] }) {
   const [filterGaam, setFilterGaam] = useState("All");
 
   // Derive unique options
-  const uniqueSevas = ["All", ...Array.from(new Set(users.map(u => u.seva)))];
+  const uniqueSevas = ["All", ...Array.from(new Set(
+    users.flatMap(u => {
+      const sevas = (u.seva || "").split(",").map(s => s.trim()).filter(Boolean);
+      return sevas.length > 0 ? sevas : ["N/A"];
+    })
+  ))];
   const uniqueGaams = ["All", ...Array.from(new Set(users.map(u => u.gaam)))];
 
   // Filter Logic
   const filteredUsers = users.filter(user => {
+    const parsedSevas = (user.seva || "").split(",").map(s => s.trim()).filter(Boolean);
+    const userSevas = parsedSevas.length > 0 ? parsedSevas : ["N/A"];
+    
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (user.uniqueId && user.uniqueId.toString().includes(searchTerm));
-    const matchesSeva = filterSeva === "All" || user.seva === filterSeva;
+                          (user.uniqueId && user.uniqueId.toString().includes(searchTerm)) ||
+                          userSevas.some(s => s !== "N/A" && s.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesSeva = filterSeva === "All" || userSevas.includes(filterSeva);
     const matchesGaam = filterGaam === "All" || user.gaam === filterGaam;
+    
     return matchesSearch && matchesSeva && matchesGaam;
   });
 
@@ -161,7 +172,7 @@ export default function UserList({ users }: { users: IUser[] }) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold leading-none tracking-tight text-foreground truncate pr-16">
+                  <h3 className="text-base font-semibold leading-normal tracking-tight text-foreground truncate pr-16 py-0.5">
                     {user.name}
                   </h3>
                   <div className="mt-1.5 flex flex-wrap gap-2">
